@@ -7,6 +7,7 @@ import { useLanguage } from '@/contexts';
 export const TestimonialsSection: FC = () => {
   const { t, language } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const hasMultiple = testimonials.length > 1;
 
   const nextTestimonial = () => {
     setCurrentIndex((prev) => (prev + 1) % testimonials.length);
@@ -91,66 +92,70 @@ export const TestimonialsSection: FC = () => {
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center justify-center gap-4 mt-8">
-            <button
-              onClick={prevTestimonial}
-              className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-              aria-label="Previous testimonial"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <div className="flex gap-2">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                    index === currentIndex
-                      ? 'bg-white scale-110'
-                      : 'bg-white/30 hover:bg-white/50'
-                  }`}
-                  aria-label={`Go to testimonial ${index + 1}`}
-                />
-              ))}
+          {hasMultiple && (
+            <div className="flex items-center justify-center gap-4 mt-8">
+              <button
+                onClick={prevTestimonial}
+                className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+                aria-label="Previous testimonial"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <div className="flex gap-2">
+                {testimonials.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentIndex(index)}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      index === currentIndex
+                        ? 'bg-white scale-110'
+                        : 'bg-white/30 hover:bg-white/50'
+                    }`}
+                    aria-label={`Go to testimonial ${index + 1}`}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={nextTestimonial}
+                className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+                aria-label="Next testimonial"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
-            <button
-              onClick={nextTestimonial}
-              className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-              aria-label="Next testimonial"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
+          )}
         </div>
       </div>
 
       {/* All Testimonials Preview */}
-      <div className="mt-16 grid md:grid-cols-4 gap-6">
-        {testimonials.map((testimonial, index) => (
-          <button
-            key={testimonial.id}
-            onClick={() => setCurrentIndex(index)}
-            className={`p-4 rounded-2xl text-left transition-all duration-300 ${
-              index === currentIndex
-                ? 'bg-white/20 ring-2 ring-white/50'
-                : 'bg-white/5 hover:bg-white/10'
-            }`}
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <img
-                src={testimonial.avatar}
-                alt={testimonial.name}
-                loading="lazy"
-                className="w-10 h-10 rounded-full object-cover"
-              />
-              <div>
-                <p className="text-sm font-medium text-white">{testimonial.name}</p>
-                <p className="text-xs text-primary-200">{testimonial.company}</p>
+      {hasMultiple && (
+        <div className="mt-16 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+          {testimonials.map((testimonial, index) => (
+            <button
+              key={testimonial.id}
+              onClick={() => setCurrentIndex(index)}
+              className={`p-4 rounded-2xl text-left transition-all duration-300 ${
+                index === currentIndex
+                  ? 'bg-white/20 ring-2 ring-white/50'
+                  : 'bg-white/5 hover:bg-white/10'
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <img
+                  src={testimonial.avatar}
+                  alt={testimonial.name}
+                  loading="lazy"
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+                <div>
+                  <p className="text-sm font-medium text-white">{testimonial.name}</p>
+                  <p className="text-xs text-primary-200">{testimonial.company}</p>
+                </div>
               </div>
-            </div>
-          </button>
-        ))}
-      </div>
+            </button>
+          ))}
+        </div>
+      )}
     </Section>
   );
 };

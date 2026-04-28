@@ -5,7 +5,7 @@
 /**
  * Monitor image loading performance
  */
-export const monitorImagePerformance = (): (() => void) | void => {
+const monitorImagePerformance = (): (() => void) | void => {
   if (typeof window === 'undefined' || !window.PerformanceObserver) {
     return;
   }
@@ -46,7 +46,7 @@ export const monitorImagePerformance = (): (() => void) | void => {
 /**
  * Calculate Largest Contentful Paint (LCP)
  */
-export const monitorLCP = (): (() => void) | void => {
+const monitorLCP = (): (() => void) | void => {
   if (typeof window === 'undefined' || !window.PerformanceObserver) {
     return;
   }

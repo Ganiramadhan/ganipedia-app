@@ -8,23 +8,12 @@ import {
   Github,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts';
-
-// Contact constants
-const PHONE_NUMBER = '083878624702';
-const EMAIL = 'hello@ganipedia.com';
-const ADDRESS_LINE1 = 'Jl. Cigadung Raya Timur No. 75, Cigadung';
-const ADDRESS_LINE2 = 'Kec. Cibeunying Kaler, Kota Bandung, Jawa Barat 40191';
+import { scrollToSection } from '@/utils';
+import { PHONE_NUMBER, EMAIL, ADDRESS_LINE1, ADDRESS_LINE2 } from '@/constants';
 
 export const Footer: FC = () => {
   const { t } = useLanguage();
   const currentYear = new Date().getFullYear();
-
-  const handleNavClick = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   const socialLinks = [
     { icon: Github, href: 'https://github.com/Ganiramadhan', label: 'GitHub' },
@@ -101,7 +90,7 @@ export const Footer: FC = () => {
                     href={item.href}
                     onClick={(e) => {
                       e.preventDefault();
-                      handleNavClick(item.href);
+                      scrollToSection(item.href);
                     }}
                     className="text-slate-400 hover:text-primary-400 transition-colors"
                   >
@@ -122,7 +111,7 @@ export const Footer: FC = () => {
                     href="#products"
                     onClick={(e) => {
                       e.preventDefault();
-                      handleNavClick('#products');
+                      scrollToSection('#products');
                     }}
                     className="text-slate-400 hover:text-primary-400 transition-colors"
                   >

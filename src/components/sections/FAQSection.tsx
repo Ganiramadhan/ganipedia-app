@@ -2,6 +2,7 @@ import { useState, type FC } from 'react';
 import { ChevronDown, HelpCircle, MessageCircle, Search } from 'lucide-react';
 import { Section, SectionHeader, Button } from '@/components/ui';
 import { useLanguage } from '@/contexts';
+import { scrollToSection } from '@/utils';
 
 export const FAQSection: FC = () => {
   const { t, language } = useLanguage();
@@ -24,13 +25,6 @@ export const FAQSection: FC = () => {
 
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
-  };
-
-  const handleContactClick = () => {
-    const element = document.querySelector('#contact');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
   };
 
   return (
@@ -136,10 +130,10 @@ export const FAQSection: FC = () => {
               ? 'Tim kami siap membantu menjawab semua pertanyaan Anda. Jangan ragu untuk menghubungi kami kapan saja.'
               : 'Our team is ready to help answer all your questions. Feel free to contact us anytime.'}
           </p>
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             size="lg"
-            onClick={handleContactClick}
+            onClick={() => scrollToSection('#contact')}
           >
             {language === 'id' ? 'Hubungi Kami' : 'Contact Us'}
           </Button>

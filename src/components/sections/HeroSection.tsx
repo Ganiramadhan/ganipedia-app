@@ -4,6 +4,7 @@ import { carouselSlides, stats } from '@/data';
 import { Button } from '@/components/ui';
 import { useCarousel } from '@/hooks';
 import { useLanguage } from '@/contexts';
+import { scrollToSection } from '@/utils';
 import {
   CheckCircle,
   Users,
@@ -39,13 +40,6 @@ export const HeroSection: FC = () => {
     'stat-4': t('stats.support'),
   };
 
-  const handleCTAClick = (link: string) => {
-    const element = document.querySelector(link);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <section id="home" className="relative min-h-screen overflow-hidden">
       {/* Background Slides */}
@@ -60,6 +54,11 @@ export const HeroSection: FC = () => {
             <img
               src={slide.image}
               alt={translatedSlides[index]?.title || slide.title}
+              loading={index === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+              fetchPriority={index === 0 ? 'high' : 'low'}
+              width={1920}
+              height={1080}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-linear-to-r from-slate-900/95 via-slate-900/80 to-slate-900/60" />
@@ -96,7 +95,7 @@ export const HeroSection: FC = () => {
                       <div className="flex flex-wrap gap-4 animate-fade-in-up animation-delay-300">
                         <Button
                           size="lg"
-                          onClick={() => handleCTAClick(slide.ctaLink)}
+                          onClick={() => scrollToSection(slide.ctaLink)}
                           rightIcon={<ArrowRight className="w-5 h-5" />}
                         >
                           {translatedSlides[index]?.cta || slide.ctaText}
@@ -105,7 +104,7 @@ export const HeroSection: FC = () => {
                           variant="outline"
                           size="lg"
                           className="border-white/30 text-white hover:bg-white/10"
-                          onClick={() => handleCTAClick('#portfolio')}
+                          onClick={() => scrollToSection('#portfolio')}
                         >
                           {t('hero.viewPortfolio')}
                         </Button>

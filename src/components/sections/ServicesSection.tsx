@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Section, SectionHeader, Card, Button } from '@/components/ui';
 import { useLanguage } from '@/contexts';
+import { scrollToSection } from '@/utils';
 
 const iconMap: Record<string, FC<{ className?: string }>> = {
   Globe,
@@ -28,13 +29,6 @@ const serviceIcons = ['Globe', 'Smartphone', 'Palette', 'Search', 'Wrench', 'Ser
 
 export const ServicesSection: FC = () => {
   const { t, language } = useLanguage();
-
-  const handleContactClick = () => {
-    const element = document.querySelector('#contact');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   const benefits = language === 'id' 
     ? [
@@ -126,7 +120,7 @@ export const ServicesSection: FC = () => {
             <Button
               variant="secondary"
               size="lg"
-              onClick={handleContactClick}
+              onClick={() => scrollToSection('#contact')}
               rightIcon={<ArrowRight className="w-5 h-5" />}
             >
               {t('services.customCta.button')}

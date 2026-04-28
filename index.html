@@ -1,28 +1,58 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/ganipedia-ico.ico" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/ganipedia-logo.jpg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
+    <meta name="color-scheme" content="light dark" />
+
     <!-- Will be replaced by React Helmet for dynamic SEO -->
-    <meta name="description" content="Ganipedia - Professional Website Development Services. We help your business grow with modern, fast, and scalable digital solutions." />
-    <meta name="keywords" content="web development, portfolio, company profile, ecommerce, pos, website services" />
+    <meta name="description" content="Ganipedia - Jasa Pembuatan Website Profesional. Kami membantu bisnis Anda berkembang dengan solusi digital modern, cepat, dan scalable." />
+    <meta name="keywords" content="jasa website, web development, company profile, ecommerce, pos, website bandung, developer indonesia" />
     <meta name="author" content="Ganipedia" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="theme-color" content="#6366f1" />
-    
-    <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <title>Ganipedia - Professional Website Development Services</title>
+    <meta name="theme-color" content="#6366f1" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1e1b4b" media="(prefers-color-scheme: dark)" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Performance: preconnect & DNS-prefetch for third-parties -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="dns-prefetch" href="//code.tidio.co" />
+
+    <!-- Performance: preload above-the-fold hero image (first carousel slide) -->
+    <link
+      rel="preload"
+      as="image"
+      href="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1920&q=80"
+      fetchpriority="high"
+    />
+
+    <!-- Fonts: load non-blocking -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" />
+    </noscript>
+
+    <title>Ganipedia - Jasa Pembuatan Website Profesional</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- Tidio Chat Widget -->
-    <script src="//code.tidio.co/mmdsgxezyorj2cp60f7p1ynwf4myl0gg.js" async></script>
+    <!-- Tidio Chat Widget (loaded after main bundle) -->
+    <script src="//code.tidio.co/mmdsgxezyorj2cp60f7p1ynwf4myl0gg.js" async defer></script>
   </body>
 </html>

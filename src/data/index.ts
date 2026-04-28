@@ -50,10 +50,26 @@ export const carouselSlides: CarouselSlide[] = [
   },
 ];
 
-// Portfolio Data
+// Portfolio Data (ordered: most recent first)
 export const portfolios: Portfolio[] = [
   {
-    id: 'portfolio-1',
+    id: 'portfolio-mekarjaya',
+    title: 'Web Profile Desa Mekarjaya',
+    category: 'Company Profile',
+    image: '/projects/home-mekarjaya.png',
+    images: [
+      '/projects/home-mekarjaya.png',
+      '/projects/gallery-mekarjaya.png',
+      '/projects/login-page-mekarjaya.png',
+      '/projects/dashboard-mekarjaya.png',
+    ],
+    description:
+      'Website resmi profil Desa Mekarjaya yang menampilkan informasi pemerintahan desa, profil wilayah, struktur perangkat desa, berita dan pengumuman, galeri kegiatan, serta layanan publik. Dilengkapi dashboard admin untuk pengelolaan konten, data penduduk, dan publikasi informasi desa secara mandiri.',
+    technologies: ['Laravel', 'Tailwind CSS', 'Alpine.js', 'MySQL'],
+    link: 'http://mekarjaya.org/',
+  },
+  {
+    id: 'portfolio-bpda-profile',
     title: 'BPDA Bujapi Jabar',
     category: 'Company Profile',
     image: '/projects/abujapi-profile.png',
@@ -63,7 +79,7 @@ export const portfolios: Portfolio[] = [
     link: 'https://bpdabujapijabar.or.id/',
   },
   {
-    id: 'portfolio-2',
+    id: 'portfolio-bpda-cms',
     title: 'BPDA Admin CMS',
     category: 'Web App',
     image: '/projects/abujapi-cms1.png',
@@ -73,7 +89,7 @@ export const portfolios: Portfolio[] = [
     link: 'https://admin.bpdabujapijabar.or.id/login',
   },
   {
-    id: 'portfolio-3',
+    id: 'portfolio-bpda-hrmis',
     title: 'BPDA HRMIS',
     category: 'Web App',
     image: '/projects/abujapi-hrmis-1.png',
@@ -83,7 +99,7 @@ export const portfolios: Portfolio[] = [
     link: 'https://hrmis.bpdabujapijabar.or.id/login',
   },
   {
-    id: 'portfolio-4',
+    id: 'portfolio-batik-merawit',
     title: 'Batik Merawit',
     category: 'Company Profile',
     image: '/projects/batik-merawit-1.png',
@@ -92,58 +108,18 @@ export const portfolios: Portfolio[] = [
     technologies: ['React', 'Tailwind CSS', 'Next.js'],
     link: 'https://batikmerawit.com/',
   },
-  // {
-  //   id: 'portfolio-5',
-  //   title: 'Drizy E-Commerce',
-  //   category: 'E-Commerce',
-  //   image: '/projects/drizy-1.png',
-  //   images: ['/projects/drizy-1.png', '/projects/drizy-2.png', '/projects/drizy-3.png'],
-  //   description: 'Platform e-commerce modern untuk produk fashion. Dilengkapi dengan payment gateway terintegrasi, inventory management real-time, customer dashboard, sistem review & rating, dan analytics penjualan komprehensif.',
-  //   technologies: ['Next.js', 'Stripe', 'Prisma', 'PostgreSQL', 'Redis'],
-  //   link: '#',
-  // },
 ];
 
 // Testimonials Data
 export const testimonials: Testimonial[] = [
   {
-    id: 'testimonial-1',
-    name: 'Budi Santoso',
-    role: 'CEO',
-    company: 'PT. Teknologi Maju',
+    id: 'testimonial-mekarjaya',
+    name: 'Pathul Mubarok, A.Md.A.B.',
+    role: 'Kaur Perencanaan',
+    company: 'Pemerintahan Desa Mekarjaya',
     content:
-      'Ganipedia sangat profesional dalam mengerjakan company profile kami. Hasilnya melebihi ekspektasi dan tim sangat responsif terhadap revisi. Highly recommended!',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&q=80',
-    rating: 5,
-  },
-  {
-    id: 'testimonial-2',
-    name: 'Siti Rahayu',
-    role: 'Owner',
-    company: 'Butik Cantika',
-    content:
-      'Website e-commerce yang dibuat sangat user-friendly dan penjualan online kami meningkat 200% setelah launching. Terima kasih Ganipedia!',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&q=80',
-    rating: 5,
-  },
-  {
-    id: 'testimonial-3',
-    name: 'Ahmad Fadli',
-    role: 'Manager',
-    company: 'Resto Nusantara',
-    content:
-      'Sistem POS yang dibuat sangat membantu operasional restoran kami. Fitur reporting-nya lengkap dan mudah digunakan oleh staff.',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&q=80',
-    rating: 5,
-  },
-  {
-    id: 'testimonial-4',
-    name: 'Maya Putri',
-    role: 'Freelance Designer',
-    company: 'Self Employed',
-    content:
-      'Portfolio website saya jadi terlihat sangat profesional. Banyak client baru yang datang setelah melihat portfolio online saya.',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&q=80',
+      'Recommended banget! Website yang dibuat keren, hasilnya rapi, responsif, dan sesuai kebutuhan. Timnya juga cepat tanggap dan komunikatif.',
+    avatar: '/reviews/review-mekarjaya.jpeg',
     rating: 5,
   },
 ];

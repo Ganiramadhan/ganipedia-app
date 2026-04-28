@@ -9,81 +9,26 @@
  */
 export const normalizeImagePath = (src: string | undefined): string => {
   if (!src) return '';
-  
+
   // If it's already a full URL, return as-is
   if (src.startsWith('http://') || src.startsWith('https://')) {
     return src;
   }
-  
+
   // Ensure path starts with /
   return src.startsWith('/') ? src : `/${src}`;
 };
 
-/**
- * Preload critical images for better performance
- * @param imagePaths - Array of image paths to preload
- */
-export const preloadImages = (imagePaths: string[]): void => {
-  imagePaths.forEach((path) => {
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = 'image';
-    link.href = normalizeImagePath(path);
-    document.head.appendChild(link);
-  });
-};
+const RASTER_EXT_RE = /\.(png|jpe?g)$/i;
 
 /**
- * Check if image exists and is loadable
- * @param src - Image source path
- * @returns Promise that resolves to true if image loads successfully
+ * Build a WebP variant path for a local raster image (.png/.jpg/.jpeg).
+ * Returns null when the source isn't a local raster (e.g., remote URL or SVG),
+ * so callers can fall back to the original src.
  */
-export const checkImageExists = (src: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
-    img.src = normalizeImagePath(src);
-  });
-};
-
-/**
- * Get optimized image URL with optional transformations
- * @param src - Original image source
- * @param options - Optional transformation options
- * @returns Optimized image URL
- */
-export const getOptimizedImageUrl = (
-  src: string,
-  options?: {
-    width?: number;
-    height?: number;
-    quality?: number;
-  }
-): string => {
-  const normalizedSrc = normalizeImagePath(src);
-  
-  // For external URLs (like Unsplash), append query params
-  if (normalizedSrc.includes('unsplash.com')) {
-    const params = new URLSearchParams();
-    if (options?.width) params.set('w', options.width.toString());
-    if (options?.quality) params.set('q', options.quality.toString());
-    return `${normalizedSrc}&${params.toString()}`;
-  }
-  
-  // For local images, return as-is (could be extended with image optimization service)
-  return normalizedSrc;
-};
-
-/**
- * Generate srcset for responsive images
- * @param src - Base image source
- * @param sizes - Array of widths for responsive images
- * @returns srcset string
- */
-export const generateSrcSet = (src: string, sizes: number[] = [640, 768, 1024, 1280, 1920]): string => {
-  if (src.includes('unsplash.com')) {
-    return sizes.map(size => `${src}&w=${size} ${size}w`).join(', ');
-  }
-  return '';
+export const toWebpPath = (src: string | undefined): string | null => {
+  if (!src) return null;
+  if (src.startsWith('http://') || src.startsWith('https://')) return null;
+  if (!RASTER_EXT_RE.test(src)) return null;
+  return src.replace(RASTER_EXT_RE, '.webp');
 };

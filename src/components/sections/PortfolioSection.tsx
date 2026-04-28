@@ -3,7 +3,7 @@ import { ExternalLink, X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react
 import { portfolios } from '@/data';
 import { Section, SectionHeader, Badge } from '@/components/ui';
 import { useLanguage } from '@/contexts';
-import { normalizeImagePath } from '@/utils';
+import { normalizeImagePath, toWebpPath } from '@/utils';
 
 interface LightboxState {
   isOpen: boolean;
@@ -63,6 +63,8 @@ const ImageLoader: FC<ImageLoaderProps> = ({ src, alt, className = '', onLoad, p
 
   // Normalize image path for production
   const imageSrc = normalizeImagePath(src);
+  const webpSrcRaw = toWebpPath(src);
+  const webpSrc = webpSrcRaw ? normalizeImagePath(webpSrcRaw) : null;
 
   return (
     <div className="relative w-full h-full bg-slate-100">
@@ -79,18 +81,24 @@ const ImageLoader: FC<ImageLoaderProps> = ({ src, alt, className = '', onLoad, p
           </div>
         </div>
       ) : (
-        <img
-          ref={imgRef}
-          src={isInView ? imageSrc : undefined}
-          alt={alt}
-          loading={priority ? 'eager' : 'lazy'}
-          decoding="async"
-          className={`${className} transition-opacity duration-300 ${
-            isLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
-          onLoad={handleLoad}
-          onError={handleError}
-        />
+        <picture>
+          {webpSrc && isInView && <source srcSet={webpSrc} type="image/webp" />}
+          <img
+            ref={imgRef}
+            src={isInView ? imageSrc : undefined}
+            alt={alt}
+            loading={priority ? 'eager' : 'lazy'}
+            decoding="async"
+            fetchPriority={priority ? 'high' : 'auto'}
+            width={1280}
+            height={720}
+            className={`${className} transition-opacity duration-300 ${
+              isLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            onLoad={handleLoad}
+            onError={handleError}
+          />
+        </picture>
       )}
     </div>
   );

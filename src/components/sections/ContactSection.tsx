@@ -2,11 +2,9 @@ import { useState, type FC, type FormEvent } from 'react';
 import { Mail, Phone, MapPin, Send, MessageCircle, Clock } from 'lucide-react';
 import { Section, SectionHeader, Button, Input, Textarea } from '@/components/ui';
 import { useLanguage } from '@/contexts';
+import { PHONE_NUMBER, EMAIL, ADDRESS_LINE1, ADDRESS_LINE2 } from '@/constants';
 
-// Contact constants
-const PHONE_NUMBER = '083878624702';
-const EMAIL = 'hello@ganipedia.com';
-const ADDRESS = 'Jl. Cigadung Raya Timur No. 75, Cigadung, Kec. Cibeunying Kaler, Kota Bandung, Jawa Barat 40191';
+const ADDRESS = `${ADDRESS_LINE1}, ${ADDRESS_LINE2}`;
 const WHATSAPP_LINK = `https://wa.me/62${PHONE_NUMBER.substring(1)}`;
 
 export const ContactSection: FC = () => {

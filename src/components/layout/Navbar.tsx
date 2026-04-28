@@ -4,6 +4,7 @@ import { navigationItems } from '@/data';
 import { Button, LanguageSelector } from '@/components/ui';
 import { useScrollspy } from '@/hooks';
 import { useLanguage } from '@/contexts';
+import { scrollToSection } from '@/utils';
 
 export const Navbar: FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,10 +40,7 @@ export const Navbar: FC = () => {
 
   const handleNavClick = (href: string) => {
     setIsOpen(false);
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    scrollToSection(href);
   };
 
   return (

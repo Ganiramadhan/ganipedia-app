@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Section, SectionHeader, Button } from '@/components/ui';
 import { useLanguage } from '@/contexts';
+import { scrollToSection } from '@/utils';
 
 const iconMap: Record<string, FC<{ className?: string }>> = {
   Briefcase,
@@ -28,13 +29,6 @@ const popularIndex = 1; // Company Profile is popular
 
 export const ProductsSection: FC = () => {
   const { t, language } = useLanguage();
-
-  const handleContactClick = () => {
-    const element = document.querySelector('#contact');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   return (
     <Section id="products" variant="gray">
@@ -135,7 +129,7 @@ export const ProductsSection: FC = () => {
               <Button
                 variant={isPopular ? 'primary' : 'outline'}
                 className="w-full"
-                onClick={handleContactClick}
+                onClick={() => scrollToSection('#contact')}
                 rightIcon={<ArrowRight className="w-4 h-4" />}
               >
                 {t('products.consultFree')}
@@ -155,7 +149,7 @@ export const ProductsSection: FC = () => {
         <Button
           variant="primary"
           size="lg"
-          onClick={handleContactClick}
+          onClick={() => scrollToSection('#contact')}
           rightIcon={<ArrowRight className="w-5 h-5" />}
         >
           {language === 'id' ? 'Konsultasi Gratis Sekarang' : 'Get Free Consultation Now'}
@@ -163,4 +157,4 @@ export const ProductsSection: FC = () => {
       </div>
     </Section>
   );
-};;
+};

@@ -15,15 +15,33 @@ export default defineConfig({
     port: 3001,
   },
   build: {
+    target: 'es2020',
+    cssCodeSplit: true,
+    sourcemap: false,
+    reportCompressedSize: false,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
+        // Split heavy third-parties into their own long-cached chunks
         manualChunks: {
-          vendor: ['react', 'react-dom'],
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'helmet': ['react-helmet-async'],
+          'icons': ['lucide-react'],
+        },
+        // Predictable, hashed asset filenames
+        assetFileNames: (assetInfo) => {
+          const name = assetInfo.name ?? ''
+          if (/\.(png|jpe?g|gif|webp|avif|svg)$/i.test(name)) {
+            return 'assets/img/[name]-[hash][extname]'
+          }
+          if (/\.(woff2?|ttf|eot)$/i.test(name)) {
+            return 'assets/fonts/[name]-[hash][extname]'
+          }
+          return 'assets/[name]-[hash][extname]'
         },
       },
     },
-    chunkSizeWarningLimit: 1000,
   },
   // Ensure assets are properly handled
-  assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg', '**/*.webp'],
+  assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg', '**/*.webp', '**/*.avif'],
 })
