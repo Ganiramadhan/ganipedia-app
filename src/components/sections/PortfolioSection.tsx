@@ -21,6 +21,11 @@ interface ImageLoaderProps {
   priority?: boolean;
 }
 
+const getPortfolioImages = (portfolio: { image: string; images?: string[] } | undefined): string[] => {
+  if (!portfolio) return [];
+  return portfolio.images && portfolio.images.length > 0 ? portfolio.images : [portfolio.image];
+};
+
 // Optimized image component with IntersectionObserver and error handling
 const ImageLoader: FC<ImageLoaderProps> = ({ src, alt, className = '', onLoad, priority = false }) => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -140,10 +145,12 @@ export const PortfolioSection: FC = () => {
 
   const openLightbox = useCallback((portfolioIndex: number, imageIndex: number) => {
     const portfolio = filteredPortfolios[portfolioIndex];
-    const images = portfolio.images && portfolio.images.length > 0 ? portfolio.images : [portfolio.image];
+    const images = getPortfolioImages(portfolio);
+    if (!portfolio || images.length === 0) return;
+
     setLightbox({
       isOpen: true,
-      currentImage: images[imageIndex],
+      currentImage: images[imageIndex] ?? images[0],
       currentTitle: portfolio.title,
       portfolioIndex,
       imageIndex,
@@ -158,7 +165,9 @@ export const PortfolioSection: FC = () => {
 
   const navigateLightbox = useCallback((direction: 'prev' | 'next') => {
     const portfolio = filteredPortfolios[lightbox.portfolioIndex];
-    const images = portfolio.images && portfolio.images.length > 0 ? portfolio.images : [portfolio.image];
+    const images = getPortfolioImages(portfolio);
+    if (images.length === 0) return;
+
     let newImageIndex: number;
     
     if (direction === 'next') {
@@ -223,7 +232,7 @@ export const PortfolioSection: FC = () => {
       {/* Portfolio Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredPortfolios.map((portfolio, portfolioIndex) => {
-          const images = portfolio.images && portfolio.images.length > 0 ? portfolio.images : [portfolio.image];
+          const images = getPortfolioImages(portfolio);
           const currentImageIndex = activeImageIndex[portfolio.id] || 0;
           const isPriority = portfolioIndex < 6; // First 6 images are priority for above-the-fold content
           
@@ -292,7 +301,7 @@ export const PortfolioSection: FC = () => {
                   <div className="flex items-center justify-center gap-2 mt-3 px-2">
                     {images.map((img, imgIndex) => (
                       <button
-                        aria-label='border'
+                        aria-label={`Tampilkan gambar ${imgIndex + 1} untuk ${portfolio.title}`}
                         key={imgIndex}
                         onClick={() => handleThumbnailClick(portfolio.id, imgIndex)}
                         className={`relative shrink-0 w-14 h-9 rounded-md overflow-hidden transition-all duration-200 border-2 ${
@@ -395,7 +404,7 @@ export const PortfolioSection: FC = () => {
           {/* Navigation Buttons */}
           {(() => {
             const portfolio = filteredPortfolios[lightbox.portfolioIndex];
-            const images = portfolio?.images && portfolio.images.length > 0 ? portfolio.images : [portfolio?.image];
+            const images = getPortfolioImages(portfolio);
             return images.length > 1 ? (
               <>
                 <button
@@ -433,7 +442,7 @@ export const PortfolioSection: FC = () => {
               <h3 className="text-2xl font-bold text-white">{lightbox.currentTitle}</h3>
               {(() => {
                 const portfolio = filteredPortfolios[lightbox.portfolioIndex];
-                const images = portfolio?.images && portfolio.images.length > 0 ? portfolio.images : [portfolio?.image];
+                const images = getPortfolioImages(portfolio);
                 return images.length > 1 ? (
                   <p className="text-white/60 text-sm mt-2">
                     {lightbox.imageIndex + 1} / {images.length}
@@ -445,7 +454,7 @@ export const PortfolioSection: FC = () => {
             {/* Thumbnail Navigation in Lightbox */}
             {(() => {
               const portfolio = filteredPortfolios[lightbox.portfolioIndex];
-              const images = portfolio?.images && portfolio.images.length > 0 ? portfolio.images : [portfolio?.image];
+              const images = getPortfolioImages(portfolio);
               return images.length > 1 ? (
                 <div className="flex justify-center gap-2 mt-6 overflow-x-auto pb-2">
                   {images.map((img, idx) => (

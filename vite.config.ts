@@ -23,10 +23,18 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Split heavy third-parties into their own long-cached chunks
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'helmet': ['react-helmet-async'],
-          'icons': ['lucide-react'],
+        manualChunks: (id) => {
+          if (!id.includes('node_modules')) return undefined
+          if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom)[\\/]/.test(id)) {
+            return 'react-vendor'
+          }
+          if (id.includes(`${path.sep}node_modules${path.sep}react-helmet-async${path.sep}`)) {
+            return 'helmet'
+          }
+          if (id.includes(`${path.sep}node_modules${path.sep}lucide-react${path.sep}`)) {
+            return 'icons'
+          }
+          return undefined
         },
         // Predictable, hashed asset filenames
         assetFileNames: (assetInfo) => {

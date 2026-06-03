@@ -53,9 +53,24 @@ export const carouselSlides: CarouselSlide[] = [
 // Portfolio Data (ordered: most recent first)
 export const portfolios: Portfolio[] = [
   {
+    id: 'portfolio-saku-finance',
+    title: 'SAKU Finance',
+    category: 'Finance SaaS',
+    image: '/projects/saku-landing.webp',
+    images: [
+      '/projects/saku-landing.webp',
+      '/projects/saku-cara-kerja.webp',
+      '/projects/saku-pricing.webp',
+    ],
+    description:
+      'Platform personal finance SaaS berbasis AI untuk mencatat transaksi dengan natural language, memindai struk lewat OCR, mengelola banyak wallet, memantau budget dan goals, mengingatkan tagihan, serta menyajikan insight finansial yang actionable.',
+    technologies: ['React', 'TypeScript', 'Golang', 'PostgreSQL', 'Redis', 'RabbitMQ', 'Claude AI', 'OCR', 'Midtrans'],
+    link: 'https://saku.ganipedia.com/',
+  },
+  {
     id: 'portfolio-mekarjaya',
-    title: 'Web Profile Desa Mekarjaya',
-    category: 'Company Profile',
+    title: 'Website Profil Desa Mekarjaya',
+    category: 'Government Website',
     image: '/projects/home-mekarjaya.png',
     images: [
       '/projects/home-mekarjaya.png',
@@ -64,8 +79,8 @@ export const portfolios: Portfolio[] = [
       '/projects/dashboard-mekarjaya.png',
     ],
     description:
-      'Website resmi profil Desa Mekarjaya yang menampilkan informasi pemerintahan desa, profil wilayah, struktur perangkat desa, berita dan pengumuman, galeri kegiatan, serta layanan publik. Dilengkapi dashboard admin untuk pengelolaan konten, data penduduk, dan publikasi informasi desa secara mandiri.',
-    technologies: ['Laravel', 'Tailwind CSS', 'Alpine.js', 'MySQL'],
+      'Website resmi Desa Mekarjaya untuk memperkuat transparansi informasi publik, menampilkan profil desa, berita dan pengumuman, galeri kegiatan, layanan masyarakat, halaman login, serta dashboard admin agar perangkat desa dapat mengelola konten secara mandiri.',
+    technologies: ['Laravel', 'Blade', 'Tailwind CSS', 'MySQL'],
     link: 'http://mekarjaya.org/',
   },
   {

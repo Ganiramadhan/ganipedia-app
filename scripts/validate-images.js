@@ -2,7 +2,7 @@
 
 /**
  * Image Validation Script
- * Validates that all portfolio images exist in the public folder
+ * Validates that portfolio and review images exist in the public folder
  */
 
 import { readFileSync, existsSync } from 'fs';
@@ -16,13 +16,13 @@ const __dirname = dirname(__filename);
 const dataPath = join(__dirname, '../src/data/index.ts');
 const publicPath = join(__dirname, '../public');
 
-console.log('🔍 Validating portfolio images...\n');
+console.log('🔍 Validating portfolio and review images...\n');
 
 try {
   const dataContent = readFileSync(dataPath, 'utf-8');
   
-  // Extract image paths using regex
-  const imageRegex = /['"]\/projects\/[^'"]+\.(?:png|jpg|jpeg|gif|webp)['"]/g;
+  // Extract public image paths used by portfolio cards and testimonials.
+  const imageRegex = /['"]\/(?:projects|reviews)\/[^'"]+\.(?:png|jpg|jpeg|gif|webp)['"]/g;
   const matches = dataContent.match(imageRegex);
   
   if (!matches) {

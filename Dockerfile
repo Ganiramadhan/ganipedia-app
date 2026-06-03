@@ -3,26 +3,28 @@
 # ----------------------------------------------------------------------------
 # Stage 1: Dependencies (cached separately from source for faster rebuilds)
 # ----------------------------------------------------------------------------
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 ENV PNPM_HOME="/pnpm" \
     PATH="/pnpm:$PATH" \
+    COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     CI=true
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@11.5.1 --activate
 WORKDIR /app
 
 # Only copy manifests first to maximize layer caching
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm install --frozen-lockfile --prefer-offline
 
 # ----------------------------------------------------------------------------
 # Stage 2: Build
 # ----------------------------------------------------------------------------
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 ENV PNPM_HOME="/pnpm" \
     PATH="/pnpm:$PATH" \
+    COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     NODE_ENV=production
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@11.5.1 --activate
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
