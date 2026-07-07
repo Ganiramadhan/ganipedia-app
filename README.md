@@ -131,13 +131,21 @@ Build output will be available in the `dist/` folder
 docker build -t ganipedia:latest .
 ```
 
-**Run Container (maps internal port 80 to external 3300):**
+**Run Container:**
 ```bash
-docker run -d -p 3300:80 --name ganipedia ganipedia:latest
+docker run -d \
+  --name ganipedia \
+  --restart unless-stopped \
+  -p 3300:3300 \
+  -e NODE_ENV=production \
+  -e CLAUDE_API_KEY \
+  -e CLAUDE_MODEL \
+  ganipedia:latest
 ```
 
 **Using Docker Compose:**
 ```bash
+cp .env.example .env
 docker-compose up -d
 ```
 
@@ -152,19 +160,22 @@ docker-compose down
 
 ### 🚀 Production Deployment
 
-**Nginx Configuration:**
-- Internal Port: 80 (nginx default)
-- External Port: 3300 (mapped via docker)
-- Gzip compression enabled
-- Static assets caching (1 year)
+**Runtime Configuration:**
+- Internal Port: 3300
+- External Port: 3300 (mapped via Docker)
+- Node server serves static assets and `/api/chat`
+- Static asset caching enabled
 - SPA routing support
 - Security headers configured
 
 **Environment Variables:**
 ```bash
-# Optional - set in Dockerfile or docker-compose.yml
 NODE_ENV=production
+CLAUDE_API_KEY=your_claude_api_key_here
+CLAUDE_MODEL=claude-sonnet-4-5
 ```
+
+Use `.env.example` as the template for local development. Keep real `.env` files out of Git and inject production values through Jenkins credentials or runtime environment variables.
 
 ## 📱 Portfolio Projects
 

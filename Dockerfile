@@ -33,23 +33,21 @@ COPY . .
 RUN pnpm run build
 
 # ----------------------------------------------------------------------------
-# Stage 3: Runtime (nginx serving static assets)
+# Stage 3: Runtime (Node server for static assets + chatbot API)
 # ----------------------------------------------------------------------------
-FROM nginx:1.27-alpine AS runtime
+FROM node:22-alpine AS runtime
+ENV NODE_ENV=production \
+    PORT=3300 \
+    HOST=0.0.0.0
+WORKDIR /app
 
-# Drop default config & copy our SPA-tuned config
-RUN rm -f /etc/nginx/conf.d/default.conf
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist ./dist
+COPY api ./api
+COPY server.js package.json ./
 
-# Copy built assets only (no source, no node_modules)
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Smaller image: no extra packages. Use built-in wget for healthcheck.
 EXPOSE 3300
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD wget -qO- http://127.0.0.1:3300/health >/dev/null 2>&1 || exit 1
 
-STOPSIGNAL SIGQUIT
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server.js"]

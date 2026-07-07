@@ -56,11 +56,11 @@ export const portfolios: Portfolio[] = [
     id: 'portfolio-saku-finance',
     title: 'SAKU Finance',
     category: 'Finance SaaS',
-    image: '/projects/saku-landing.webp',
+    image: '/projects/saku-finance-1.webp',
     images: [
-      '/projects/saku-landing.webp',
-      '/projects/saku-cara-kerja.webp',
-      '/projects/saku-pricing.webp',
+      '/projects/saku-finance-1.webp',
+      '/projects/saku-finance-2.webp',
+      '/projects/saku-finance-3.webp',
     ],
     description:
       'Platform personal finance SaaS berbasis AI untuk mencatat transaksi dengan natural language, memindai struk lewat OCR, mengelola banyak wallet, memantau budget dan goals, mengingatkan tagihan, serta menyajikan insight finansial yang actionable.',

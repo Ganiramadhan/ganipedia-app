@@ -4,6 +4,8 @@ pipeline {
     environment {
         REGISTRY = "registry.ganipedia.com"
         REGISTRY_CREDENTIALS_ID = "ganipedia-registry"
+        CLAUDE_API_KEY_CREDENTIALS_ID = "ganipedia-claude-api-key"
+        CLAUDE_MODEL_CREDENTIALS_ID = "ganipedia-claude-model"
         
         // Application Configuration 
         IMAGE_NAME = "ganipedia-app"
@@ -58,11 +60,15 @@ pipeline {
             }
             steps {
                 echo "📦 Pushing to registry..."
-                withCredentials([usernamePassword(
-                    credentialsId: "${REGISTRY_CREDENTIALS_ID}",
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: "${REGISTRY_CREDENTIALS_ID}",
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    ),
+                    string(credentialsId: "${CLAUDE_API_KEY_CREDENTIALS_ID}", variable: 'CLAUDE_API_KEY'),
+                    string(credentialsId: "${CLAUDE_MODEL_CREDENTIALS_ID}", variable: 'CLAUDE_MODEL')
+                ]) {
                     sh """
                         echo "\$DOCKER_PASS" | docker login ${REGISTRY} -u "\$DOCKER_USER" --password-stdin
                         
@@ -99,6 +105,9 @@ pipeline {
                         docker run -d \\
                             --name ${CONTAINER_NAME} \\
                             --restart unless-stopped \\
+                            -e NODE_ENV=production \\
+                            -e CLAUDE_API_KEY \\
+                            -e CLAUDE_MODEL \\
                             -p ${APP_PORT}:${CONTAINER_PORT} \\
                             ${IMAGE_FULL}:${IMAGE_TAG}
                         
