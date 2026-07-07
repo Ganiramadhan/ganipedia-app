@@ -133,10 +133,13 @@ docker build -t ganipedia:latest .
 
 **Run Container:**
 ```bash
+docker network create ganipedia 2>/dev/null || true
 docker run -d \
-  --name ganipedia \
+  --name ganipedia-app \
   --restart unless-stopped \
-  -p 3300:3300 \
+  --network ganipedia \
+  --network-alias ganipedia-app \
+  --expose 3300 \
   -e NODE_ENV=production \
   -e CLAUDE_API_KEY \
   -e CLAUDE_MODEL \
@@ -149,11 +152,11 @@ cp .env.example .env
 docker-compose up -d
 ```
 
-Website will be available at `http://localhost:3300`
+Point Nginx Proxy Manager to `http://ganipedia-app:3300` on the `ganipedia` Docker network.
 
 **Stop Container:**
 ```bash
-docker stop ganipedia
+docker stop ganipedia-app
 # or with docker-compose
 docker-compose down
 ```
@@ -162,7 +165,9 @@ docker-compose down
 
 **Runtime Configuration:**
 - Internal Port: 3300
-- External Port: 3300 (mapped via Docker)
+- Docker Network: `ganipedia`
+- Network Alias: `ganipedia-app`
+- No host port publishing; public access is handled by Nginx Proxy Manager
 - Node server serves static assets and `/api/chat`
 - Static asset caching enabled
 - SPA routing support
@@ -176,6 +181,17 @@ CLAUDE_MODEL=claude-sonnet-4-5
 ```
 
 Use `.env.example` as the template for local development. Keep real `.env` files out of Git and inject production values through Jenkins credentials or runtime environment variables.
+
+**Jenkins Credentials:**
+- `docker-registry-host` as secret text, for example `registry.example.com` without protocol
+- `docker-registry-username` as secret text
+- `docker-registry-credentials` as secret text for the registry password or access token
+- `ganipedia-host-ssh-server` as secret text
+- `ganipedia-host-ssh-port` as secret text
+- `ganipedia-host-ssh-user` as secret text
+- `ganipedia-host-ssh-password` as secret text
+- `ganipedia-claude-api-key` as secret text
+- `ganipedia-claude-model` as secret text
 
 ## 📱 Portfolio Projects
 

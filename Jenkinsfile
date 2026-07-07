@@ -2,25 +2,26 @@ pipeline {
     agent any
 
     environment {
-        REGISTRY = "registry.ganipedia.com"
-        REGISTRY_CREDENTIALS_ID = "ganipedia-registry"
+        REGISTRY_HOST_CREDENTIALS_ID = "docker-registry-host"
+        REGISTRY_USERNAME_CREDENTIALS_ID = "docker-registry-username"
+        REGISTRY_PASSWORD_CREDENTIALS_ID = "docker-registry-credentials"
 
-        PRODUCTION_SERVER = "43.133.144.126"
-        PRODUCTION_SSH_PORT = "22"
-        PRODUCTION_USER = "ganipedia"
-        PRODUCTION_SSH_PASSWORD_CREDENTIALS_ID = "ganipedia-server-password"
+        DEPLOY_HOST_CREDENTIALS_ID = "ganipedia-host-ssh-server"
+        DEPLOY_SSH_PORT_CREDENTIALS_ID = "ganipedia-host-ssh-port"
+        DEPLOY_SSH_USER_CREDENTIALS_ID = "ganipedia-host-ssh-user"
+        DEPLOY_SSH_PASSWORD_CREDENTIALS_ID = "ganipedia-host-ssh-password"
 
         CLAUDE_API_KEY_CREDENTIALS_ID = "ganipedia-claude-api-key"
         CLAUDE_MODEL_CREDENTIALS_ID = "ganipedia-claude-model"
 
         IMAGE_NAME = "ganipedia-app"
         CONTAINER_NAME = "ganipedia-app"
-        APP_PORT = "3300"
+        DOCKER_NETWORK = "ganipedia"
+        NETWORK_ALIAS = "ganipedia-app"
         CONTAINER_PORT = "3300"
         HEALTH_PATH = "/health"
 
         DOCKER_BUILDKIT = "1"
-        IMAGE_REPO = "${REGISTRY}/${IMAGE_NAME}"
     }
 
     options {
@@ -56,19 +57,21 @@ pipeline {
                         script: 'git rev-parse --short HEAD 2>/dev/null || echo unknown'
                     ).trim()
                     env.IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT_SHORT}"
-                    env.IMAGE_FULL = "${env.IMAGE_REPO}:${env.IMAGE_TAG}"
-                    env.IMAGE_LATEST = "${env.IMAGE_REPO}:latest"
+                    env.LOCAL_IMAGE = "${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                    env.LOCAL_LATEST = "${env.IMAGE_NAME}:latest"
 
                     echo """
 Build Configuration
 -------------------
 Branch      : ${env.BRANCH_NAME}
 Commit      : ${env.GIT_COMMIT_SHORT}
-Image       : ${env.IMAGE_FULL}
-Latest      : ${env.IMAGE_LATEST}
-Remote      : ${PRODUCTION_USER}@${PRODUCTION_SERVER}:${PRODUCTION_SSH_PORT}
+Image       : ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+Latest      : ${env.IMAGE_NAME}:latest
+Registry    : configured by Jenkins credentials
+Remote      : configured by Jenkins credentials
 Container   : ${CONTAINER_NAME}
-Port        : ${APP_PORT} -> ${CONTAINER_PORT}
+Network     : ${DOCKER_NETWORK}
+Alias       : ${NETWORK_ALIAS}:${CONTAINER_PORT}
 """
                 }
             }
@@ -83,8 +86,8 @@ Port        : ${APP_PORT} -> ${CONTAINER_PORT}
                     set -euo pipefail
 
                     docker build \
-                        --tag "$IMAGE_FULL" \
-                        --tag "$IMAGE_LATEST" \
+                        --tag "$LOCAL_IMAGE" \
+                        --tag "$LOCAL_LATEST" \
                         --label "org.opencontainers.image.revision=$GIT_COMMIT_SHORT" \
                         --label "org.opencontainers.image.source=$JOB_NAME" \
                         --progress=plain \
@@ -98,14 +101,20 @@ Port        : ${APP_PORT} -> ${CONTAINER_PORT}
                 branch 'main'
             }
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: "${REGISTRY_CREDENTIALS_ID}",
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
+                withCredentials([
+                    string(credentialsId: "${REGISTRY_HOST_CREDENTIALS_ID}", variable: 'REGISTRY'),
+                    string(credentialsId: "${REGISTRY_USERNAME_CREDENTIALS_ID}", variable: 'DOCKER_USER'),
+                    string(credentialsId: "${REGISTRY_PASSWORD_CREDENTIALS_ID}", variable: 'DOCKER_PASS')
+                ]) {
                     sh '''
                         set -euo pipefail
+                        set +x
 
+                        IMAGE_FULL="$REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
+                        IMAGE_LATEST="$REGISTRY/$IMAGE_NAME:latest"
+
+                        docker tag "$LOCAL_IMAGE" "$IMAGE_FULL"
+                        docker tag "$LOCAL_LATEST" "$IMAGE_LATEST"
                         printf '%s\n' "$DOCKER_PASS" | docker login "$REGISTRY" -u "$DOCKER_USER" --password-stdin
                         docker push "$IMAGE_FULL"
                         docker push "$IMAGE_LATEST"
@@ -121,12 +130,13 @@ Port        : ${APP_PORT} -> ${CONTAINER_PORT}
             }
             steps {
                 withCredentials([
-                    usernamePassword(
-                        credentialsId: "${REGISTRY_CREDENTIALS_ID}",
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    ),
-                    string(credentialsId: "${PRODUCTION_SSH_PASSWORD_CREDENTIALS_ID}", variable: 'SSH_PASS'),
+                    string(credentialsId: "${REGISTRY_HOST_CREDENTIALS_ID}", variable: 'REGISTRY'),
+                    string(credentialsId: "${REGISTRY_USERNAME_CREDENTIALS_ID}", variable: 'DOCKER_USER'),
+                    string(credentialsId: "${REGISTRY_PASSWORD_CREDENTIALS_ID}", variable: 'DOCKER_PASS'),
+                    string(credentialsId: "${DEPLOY_HOST_CREDENTIALS_ID}", variable: 'DEPLOY_HOST'),
+                    string(credentialsId: "${DEPLOY_SSH_PORT_CREDENTIALS_ID}", variable: 'DEPLOY_SSH_PORT'),
+                    string(credentialsId: "${DEPLOY_SSH_USER_CREDENTIALS_ID}", variable: 'DEPLOY_SSH_USER'),
+                    string(credentialsId: "${DEPLOY_SSH_PASSWORD_CREDENTIALS_ID}", variable: 'SSH_PASS'),
                     string(credentialsId: "${CLAUDE_API_KEY_CREDENTIALS_ID}", variable: 'CLAUDE_API_KEY'),
                     string(credentialsId: "${CLAUDE_MODEL_CREDENTIALS_ID}", variable: 'CLAUDE_MODEL')
                 ]) {
@@ -136,6 +146,7 @@ Port        : ${APP_PORT} -> ${CONTAINER_PORT}
 
                         ASKPASS_FILE="$(mktemp)"
                         REMOTE_SECRET_DIR="/tmp/$CONTAINER_NAME.$BUILD_NUMBER"
+                        IMAGE_FULL="$REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
 
                         cleanup_local() {
                             rm -f "$ASKPASS_FILE"
@@ -162,8 +173,8 @@ ENDASKPASS
                                 -o StrictHostKeyChecking=no \
                                 -o ConnectTimeout=30 \
                                 -o BatchMode=no \
-                                -p "$PRODUCTION_SSH_PORT" \
-                                "$PRODUCTION_USER@$PRODUCTION_SERVER" "$@"
+                                -p "$DEPLOY_SSH_PORT" \
+                                "$DEPLOY_SSH_USER@$DEPLOY_HOST" "$@"
                         }
 
                         ssh_remote "rm -rf '$REMOTE_SECRET_DIR'; mkdir -p '$REMOTE_SECRET_DIR'; chmod 700 '$REMOTE_SECRET_DIR'"
@@ -193,7 +204,7 @@ docker_cmd() {
     fi
 
     echo "ERROR: current user cannot access Docker and sudo is not available." >&2
-    echo "Fix server permission with: sudo usermod -aG docker $USER && newgrp docker" >&2
+    echo "Fix server permission with: sudo usermod -aG docker ${USER:-deploy-user} && newgrp docker" >&2
     exit 1
 }
 
@@ -204,6 +215,11 @@ trap cleanup EXIT
 
 echo "Checking Docker access..."
 docker_cmd version >/dev/null
+
+if ! docker_cmd network inspect "$DOCKER_NETWORK" >/dev/null 2>&1; then
+    echo "Creating Docker network $DOCKER_NETWORK..."
+    docker_cmd network create "$DOCKER_NETWORK" >/dev/null
+fi
 
 echo "Authenticating remote Docker host to registry..."
 docker_cmd login "$REGISTRY" -u "$DOCKER_USER" --password-stdin < "$DOCKER_PASS_FILE"
@@ -223,8 +239,10 @@ docker_cmd rm "$CONTAINER_NAME" >/dev/null 2>&1 || true
 docker_cmd run -d \
     --name "$CONTAINER_NAME" \
     --restart unless-stopped \
+    --network "$DOCKER_NETWORK" \
+    --network-alias "$NETWORK_ALIAS" \
     --env-file "$APP_ENV_FILE" \
-    -p "$APP_PORT:$CONTAINER_PORT" \
+    --expose "$CONTAINER_PORT" \
     "$IMAGE_FULL"
 
 echo "Waiting for application health..."
@@ -250,8 +268,10 @@ if [ -n "$PREVIOUS_IMAGE" ]; then
     docker_cmd run -d \
         --name "$CONTAINER_NAME" \
         --restart unless-stopped \
+        --network "$DOCKER_NETWORK" \
+        --network-alias "$NETWORK_ALIAS" \
         --env-file "$APP_ENV_FILE" \
-        -p "$APP_PORT:$CONTAINER_PORT" \
+        --expose "$CONTAINER_PORT" \
         "$PREVIOUS_IMAGE" || true
 fi
 
@@ -265,7 +285,8 @@ REMOTE_SCRIPT
                             DOCKER_USER='$DOCKER_USER' \
                             IMAGE_FULL='$IMAGE_FULL' \
                             CONTAINER_NAME='$CONTAINER_NAME' \
-                            APP_PORT='$APP_PORT' \
+                            DOCKER_NETWORK='$DOCKER_NETWORK' \
+                            NETWORK_ALIAS='$NETWORK_ALIAS' \
                             CONTAINER_PORT='$CONTAINER_PORT' \
                             HEALTH_PATH='$HEALTH_PATH' \
                             REMOTE_SECRET_DIR='$REMOTE_SECRET_DIR' \
@@ -284,10 +305,12 @@ REMOTE_SCRIPT
                 branch 'main'
             }
             steps {
-                withCredentials([string(
-                    credentialsId: "${PRODUCTION_SSH_PASSWORD_CREDENTIALS_ID}",
-                    variable: 'SSH_PASS'
-                )]) {
+                withCredentials([
+                    string(credentialsId: "${DEPLOY_HOST_CREDENTIALS_ID}", variable: 'DEPLOY_HOST'),
+                    string(credentialsId: "${DEPLOY_SSH_PORT_CREDENTIALS_ID}", variable: 'DEPLOY_SSH_PORT'),
+                    string(credentialsId: "${DEPLOY_SSH_USER_CREDENTIALS_ID}", variable: 'DEPLOY_SSH_USER'),
+                    string(credentialsId: "${DEPLOY_SSH_PASSWORD_CREDENTIALS_ID}", variable: 'SSH_PASS')
+                ]) {
                     sh '''
                         set -euo pipefail
                         set +x
@@ -318,8 +341,8 @@ ENDASKPASS
                                 -o StrictHostKeyChecking=no \
                                 -o ConnectTimeout=30 \
                                 -o BatchMode=no \
-                                -p "$PRODUCTION_SSH_PORT" \
-                                "$PRODUCTION_USER@$PRODUCTION_SERVER" "$@"
+                                -p "$DEPLOY_SSH_PORT" \
+                                "$DEPLOY_SSH_USER@$DEPLOY_HOST" "$@"
                         }
 
                         REMOTE_VERIFY_DIR="/tmp/$CONTAINER_NAME.verify.$BUILD_NUMBER"
@@ -356,6 +379,11 @@ if ! docker_cmd ps --filter "name=^/$CONTAINER_NAME\\$" --format "{{.Names}}" | 
     exit 1
 fi
 
+if ! docker_cmd inspect "$CONTAINER_NAME" --format "{{json .NetworkSettings.Networks}}" | grep -q "\"$DOCKER_NETWORK\""; then
+    echo "ERROR: $CONTAINER_NAME is not attached to Docker network $DOCKER_NETWORK"
+    exit 1
+fi
+
 docker_cmd exec "$CONTAINER_NAME" wget -qO- "http://127.0.0.1:$CONTAINER_PORT$HEALTH_PATH" >/dev/null
 docker_cmd ps --filter "name=^/$CONTAINER_NAME\\$"
 REMOTE_VERIFY
@@ -363,6 +391,7 @@ REMOTE_VERIFY
                         ssh_remote "
                             chmod 700 /tmp/$CONTAINER_NAME-verify.sh
                             CONTAINER_NAME='$CONTAINER_NAME' \
+                            DOCKER_NETWORK='$DOCKER_NETWORK' \
                             CONTAINER_PORT='$CONTAINER_PORT' \
                             HEALTH_PATH='$HEALTH_PATH' \
                             REMOTE_VERIFY_DIR='$REMOTE_VERIFY_DIR' \
@@ -378,16 +407,16 @@ REMOTE_VERIFY
     post {
         always {
             sh '''
-                docker logout "$REGISTRY" >/dev/null 2>&1 || true
+                docker logout >/dev/null 2>&1 || true
                 docker image prune -f >/dev/null 2>&1 || true
             '''
         }
         success {
-            echo "Deployment successful: ${IMAGE_FULL}"
+            echo "Deployment successful: ${IMAGE_NAME}:${IMAGE_TAG}"
         }
         failure {
             echo "Deployment failed. Check Jenkins logs for details."
-            echo "If the remote error is Docker socket permission, add user '${PRODUCTION_USER}' to the docker group on ${PRODUCTION_SERVER}."
+            echo "If the remote error is Docker socket permission, add the deploy user to the docker group on the production server."
         }
     }
 }

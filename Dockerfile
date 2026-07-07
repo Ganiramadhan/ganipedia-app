@@ -36,18 +36,26 @@ RUN pnpm run build
 # Stage 3: Runtime (Node server for static assets + chatbot API)
 # ----------------------------------------------------------------------------
 FROM node:22-alpine AS runtime
+WORKDIR /app
+
+RUN apk add --no-cache tini wget && \
+    addgroup -S ganipedia && \
+    adduser -S -G ganipedia ganipedia
+
 ENV NODE_ENV=production \
     PORT=3300 \
     HOST=0.0.0.0
-WORKDIR /app
 
-COPY --from=builder /app/dist ./dist
-COPY api ./api
-COPY server.js package.json ./
+COPY --from=builder --chown=ganipedia:ganipedia /app/dist ./dist
+COPY --chown=ganipedia:ganipedia api ./api
+COPY --chown=ganipedia:ganipedia server.js package.json ./
+
+USER ganipedia
 
 EXPOSE 3300
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD wget -qO- http://127.0.0.1:3300/health >/dev/null 2>&1 || exit 1
 
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "server.js"]
