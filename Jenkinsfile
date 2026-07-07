@@ -107,59 +107,73 @@ pipeline {
                         set -euo pipefail
                         set +x
 
-                        command -v sshpass >/dev/null 2>&1 || {
-                            if command -v apt-get >/dev/null 2>&1; then
-                                apt-get update -qq && apt-get install -y -qq sshpass
-                            elif command -v yum >/dev/null 2>&1; then
-                                yum install -y -q sshpass
+                        ASKPASS_FILE="$(mktemp)"
+                        cleanup_local() {
+                            rm -f "$ASKPASS_FILE"
+                        }
+                        trap cleanup_local EXIT
+
+                        cat > "$ASKPASS_FILE" << 'ENDASKPASS'
+#!/bin/sh
+printf '%s\n' "$SSH_PASS"
+ENDASKPASS
+                        chmod 700 "$ASKPASS_FILE"
+                        export SSH_ASKPASS="$ASKPASS_FILE"
+                        export SSH_ASKPASS_REQUIRE=force
+                        export DISPLAY=:0
+
+                        ssh_remote() {
+                            if command -v setsid >/dev/null 2>&1; then
+                                setsid ssh \\
+                                    -o StrictHostKeyChecking=no \\
+                                    -o ConnectTimeout=30 \\
+                                    -o BatchMode=no \\
+                                    -p "$PRODUCTION_SSH_PORT" \\
+                                    "$PRODUCTION_USER@$PRODUCTION_SERVER" "$@"
                             else
-                                echo "ERROR: sshpass is required on the Jenkins agent"
-                                exit 1
+                                ssh \\
+                                    -o StrictHostKeyChecking=no \\
+                                    -o ConnectTimeout=30 \\
+                                    -o BatchMode=no \\
+                                    -p "$PRODUCTION_SSH_PORT" \\
+                                    "$PRODUCTION_USER@$PRODUCTION_SERVER" "$@"
                             fi
                         }
 
-                        sshpass -p "$SSH_PASS" ssh \\
-                            -o StrictHostKeyChecking=no \\
-                            -o ConnectTimeout=30 \\
-                            -p "$PRODUCTION_SSH_PORT" \\
-                            "$PRODUCTION_USER@$PRODUCTION_SERVER" bash << ENDSSH
-set -euo pipefail
+                        REMOTE_ENV_FILE="/tmp/$CONTAINER_NAME.env.$BUILD_NUMBER"
 
-ENV_FILE="\$(mktemp /tmp/$CONTAINER_NAME.env.XXXXXX)"
-cleanup() {
-    rm -f "\$ENV_FILE"
-}
-trap cleanup EXIT
+                        {
+                            printf 'NODE_ENV=production\n'
+                            printf 'CLAUDE_API_KEY=%s\n' "$CLAUDE_API_KEY"
+                            printf 'CLAUDE_MODEL=%s\n' "$CLAUDE_MODEL"
+                        } | ssh_remote "umask 077; cat > '$REMOTE_ENV_FILE'"
 
-cat > "\$ENV_FILE" << ENDENV
-NODE_ENV=production
-CLAUDE_API_KEY=$CLAUDE_API_KEY
-CLAUDE_MODEL=$CLAUDE_MODEL
-ENDENV
-chmod 600 "\$ENV_FILE"
+                        echo "Authenticating remote Docker host to registry..."
+                        printf '%s\n' "$DOCKER_PASS" | ssh_remote "docker login '$REGISTRY' -u '$DOCKER_USER' --password-stdin"
 
-echo "Authenticating remote Docker host to registry..."
-echo "$DOCKER_PASS" | docker login "$REGISTRY" -u "$DOCKER_USER" --password-stdin
+                        ssh_remote "
+                            set -euo pipefail
+                            trap 'rm -f \"$REMOTE_ENV_FILE\"' EXIT
 
-echo "Pulling $IMAGE_FULL:$IMAGE_TAG..."
-docker pull "$IMAGE_FULL:$IMAGE_TAG"
+                            echo 'Pulling $IMAGE_FULL:$IMAGE_TAG...'
+                            docker pull '$IMAGE_FULL:$IMAGE_TAG'
 
-echo "Replacing container $CONTAINER_NAME..."
-docker stop "$CONTAINER_NAME" >/dev/null 2>&1 || true
-docker rm "$CONTAINER_NAME" >/dev/null 2>&1 || true
+                            echo 'Replacing container $CONTAINER_NAME...'
+                            docker stop '$CONTAINER_NAME' >/dev/null 2>&1 || true
+                            docker rm '$CONTAINER_NAME' >/dev/null 2>&1 || true
 
-docker run -d \\
-    --name "$CONTAINER_NAME" \\
-    --restart unless-stopped \\
-    --env-file "\$ENV_FILE" \\
-    -p "$APP_PORT:$CONTAINER_PORT" \\
-    "$IMAGE_FULL:$IMAGE_TAG"
+                            docker run -d \\
+                                --name '$CONTAINER_NAME' \\
+                                --restart unless-stopped \\
+                                --env-file '$REMOTE_ENV_FILE' \\
+                                -p '$APP_PORT:$CONTAINER_PORT' \\
+                                '$IMAGE_FULL:$IMAGE_TAG'
 
-docker logout "$REGISTRY" >/dev/null 2>&1 || true
-docker image prune -f >/dev/null 2>&1 || true
+                            docker logout '$REGISTRY' >/dev/null 2>&1 || true
+                            docker image prune -f >/dev/null 2>&1 || true
 
-echo "Remote deployment completed"
-ENDSSH
+                            echo 'Remote deployment completed'
+                        "
                     '''
                 }
             }
@@ -179,37 +193,59 @@ ENDSSH
                         set -euo pipefail
                         set +x
 
-                        sshpass -p "$SSH_PASS" ssh \\
+                        ASKPASS_FILE="$(mktemp)"
+                        cleanup_local() {
+                            rm -f "$ASKPASS_FILE"
+                        }
+                        trap cleanup_local EXIT
+
+                        cat > "$ASKPASS_FILE" << 'ENDASKPASS'
+#!/bin/sh
+printf '%s\n' "$SSH_PASS"
+ENDASKPASS
+                        chmod 700 "$ASKPASS_FILE"
+                        export SSH_ASKPASS="$ASKPASS_FILE"
+                        export SSH_ASKPASS_REQUIRE=force
+                        export DISPLAY=:0
+
+                        if command -v setsid >/dev/null 2>&1; then
+                            SSH_PREFIX="setsid ssh"
+                        else
+                            SSH_PREFIX="ssh"
+                        fi
+
+                        $SSH_PREFIX \\
                             -o StrictHostKeyChecking=no \\
                             -o ConnectTimeout=30 \\
+                            -o BatchMode=no \\
                             -p "$PRODUCTION_SSH_PORT" \\
-                            "$PRODUCTION_USER@$PRODUCTION_SERVER" bash << ENDSSH
-set -euo pipefail
+                            "$PRODUCTION_USER@$PRODUCTION_SERVER" "
+                                set -euo pipefail
 
-echo "Waiting for $CONTAINER_NAME to start..."
-sleep 8
+                                echo 'Waiting for $CONTAINER_NAME to start...'
+                                sleep 8
 
-if ! docker ps --filter "name=^/$CONTAINER_NAME\\$" --format "{{.Names}}" | grep -q "^$CONTAINER_NAME\\$"; then
-    echo "ERROR: $CONTAINER_NAME is not running"
-    docker logs --tail=100 "$CONTAINER_NAME" 2>&1 || true
-    exit 1
-fi
+                                if ! docker ps --filter 'name=^/$CONTAINER_NAME\\$' --format '{{.Names}}' | grep -q '^$CONTAINER_NAME\\$'; then
+                                    echo 'ERROR: $CONTAINER_NAME is not running'
+                                    docker logs --tail=100 '$CONTAINER_NAME' 2>&1 || true
+                                    exit 1
+                                fi
 
-for i in \$(seq 1 5); do
-    if docker exec "$CONTAINER_NAME" wget -qO- "http://127.0.0.1:$CONTAINER_PORT/health" >/dev/null 2>&1; then
-        echo "Production health check passed"
-        docker ps --filter "name=^/$CONTAINER_NAME\\$"
-        exit 0
-    fi
+                                for i in \$(seq 1 5); do
+                                    if docker exec '$CONTAINER_NAME' wget -qO- 'http://127.0.0.1:$CONTAINER_PORT/health' >/dev/null 2>&1; then
+                                        echo 'Production health check passed'
+                                        docker ps --filter 'name=^/$CONTAINER_NAME\\$'
+                                        exit 0
+                                    fi
 
-    echo "Health check attempt \$i failed; retrying..."
-    sleep 5
-done
+                                    echo \"Health check attempt \$i failed; retrying...\"
+                                    sleep 5
+                                done
 
-echo "ERROR: Health check failed"
-docker logs --tail=100 "$CONTAINER_NAME" 2>&1 || true
-exit 1
-ENDSSH
+                                echo 'ERROR: Health check failed'
+                                docker logs --tail=100 '$CONTAINER_NAME' 2>&1 || true
+                                exit 1
+                            "
                     '''
                 }
             }
