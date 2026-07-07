@@ -13,7 +13,7 @@ pipeline {
         
         // Computed values
         IMAGE_FULL = "${REGISTRY}/${IMAGE_NAME}"
-        NEW_VERSION = ""
+        IMAGE_TAG = "latest"
     }
 
     options {
@@ -29,70 +29,6 @@ pipeline {
     }
 
     stages {
-        stage('Prepare') {
-            when {
-                branch 'main'
-            }
-            steps {
-                script {
-                    echo "🔍 Detecting current version..."
-                    
-                    // Get current running container image tag (not SHA)
-                    def containerImage = ""
-                    try {
-                        containerImage = sh(
-                            script: "docker inspect ${CONTAINER_NAME} --format='{{.Config.Image}}' 2>/dev/null | awk -F: '{print \$NF}' || echo ''",
-                            returnStdout: true
-                        ).trim()
-                    } catch (Exception e) {
-                        echo "⚠️ No container found: ${e.message}"
-                    }
-                    
-                    echo "📦 Detected image tag: '${containerImage}'"
-                    
-                    // Default version starts at 1.0.0
-                    def major = 1
-                    def minor = 0  
-                    def patch = 0
-                    
-                    // Try to parse existing version
-                    if (containerImage && containerImage != "" && containerImage != "null" && containerImage != "latest" && containerImage.startsWith('v')) {
-                        try {
-                            def versionString = containerImage.replaceAll('v', '')
-                            def versionParts = versionString.split('\\.')
-                            
-                            if (versionParts.length == 3) {
-                                major = Integer.parseInt(versionParts[0])
-                                minor = Integer.parseInt(versionParts[1])
-                                patch = Integer.parseInt(versionParts[2])
-                                echo "📌 Current version: v${major}.${minor}.${patch}"
-                            }
-                        } catch (Exception e) {
-                            echo "⚠️ Parse error: ${e.message}, using default"
-                        }
-                    } else {
-                        echo "🆕 No valid version, starting from v3.0.0"
-                    }
-                    
-                    // Increment version with logic: patch 0-10, then increment minor
-                    patch = patch + 1
-                    if (patch > 10) {
-                        patch = 0
-                        minor = minor + 1
-                    }
-                    if (minor > 10) {
-                        minor = 0
-                        major = major + 1
-                    }
-                    
-                    // CRITICAL: Direct string assignment without intermediate variable
-                    NEW_VERSION = "v${major}.${minor}.${patch}"
-                    
-                    echo "✨ New version: ${NEW_VERSION}"
-                }
-            }
-        }
-
         stage('Checkout') {
             when {
                 branch 'main'
@@ -109,9 +45,9 @@ pipeline {
             }
             steps {
                 echo "🔨 Building Docker image..."
-                echo "Image: ${IMAGE_FULL}:${NEW_VERSION}"
+                echo "Image: ${IMAGE_FULL}:${IMAGE_TAG}"
                 sh """
-                    docker build -t ${IMAGE_FULL}:${NEW_VERSION} .
+                    docker build -t ${IMAGE_FULL}:${IMAGE_TAG} .
                 """
             }
         }
@@ -130,10 +66,7 @@ pipeline {
                     sh """
                         echo "\$DOCKER_PASS" | docker login ${REGISTRY} -u "\$DOCKER_USER" --password-stdin
                         
-                        docker push ${IMAGE_FULL}:${NEW_VERSION}
-                        
-                        docker tag ${IMAGE_FULL}:${NEW_VERSION} ${IMAGE_FULL}:latest
-                        docker push ${IMAGE_FULL}:latest
+                        docker push ${IMAGE_FULL}:${IMAGE_TAG}
                         
                         docker logout ${REGISTRY}
                     """
@@ -147,21 +80,31 @@ pipeline {
             }
             steps {
                 echo "🚀 Deploying application..."
-                sh """
-                    # Stop and remove old container
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm ${CONTAINER_NAME} || true
-                    
-                    # Pull new image
-                    docker pull ${IMAGE_FULL}:${NEW_VERSION}
-                    
-                    # Run new container
-                    docker run -d \\
-                        --name ${CONTAINER_NAME} \\
-                        --restart unless-stopped \\
-                        -p ${APP_PORT}:${CONTAINER_PORT} \\
-                        ${IMAGE_FULL}:${NEW_VERSION}
-                """
+                withCredentials([usernamePassword(
+                    credentialsId: "${REGISTRY_CREDENTIALS_ID}",
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh """
+                        echo "\$DOCKER_PASS" | docker login ${REGISTRY} -u "\$DOCKER_USER" --password-stdin
+                        
+                        # Pull new image before stopping the running container
+                        docker pull ${IMAGE_FULL}:${IMAGE_TAG}
+                        
+                        # Stop and remove old container
+                        docker stop ${CONTAINER_NAME} || true
+                        docker rm ${CONTAINER_NAME} || true
+                        
+                        # Run new container
+                        docker run -d \\
+                            --name ${CONTAINER_NAME} \\
+                            --restart unless-stopped \\
+                            -p ${APP_PORT}:${CONTAINER_PORT} \\
+                            ${IMAGE_FULL}:${IMAGE_TAG}
+                        
+                        docker logout ${REGISTRY}
+                    """
+                }
             }
         }
 
@@ -196,14 +139,6 @@ pipeline {
                 sh """
                     # Remove dangling images
                     docker image prune -f
-                    
-                    # Keep only last 3 versions (excluding latest and current)
-                    docker images ${IMAGE_FULL} --format "{{.ID}} {{.Tag}}" | \\
-                    grep -v "latest" | \\
-                    grep -v "${NEW_VERSION}" | \\
-                    tail -n +4 | \\
-                    awk '{print \$1}' | \\
-                    xargs -r docker rmi -f || true
                 """
             }
         }
@@ -213,7 +148,7 @@ pipeline {
         success {
             echo "✅ Deployment successful!"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "📦 Image: ${IMAGE_FULL}:${NEW_VERSION}"
+            echo "📦 Image: ${IMAGE_FULL}:${IMAGE_TAG}"
             echo "🐳 Container: ${CONTAINER_NAME}"
             echo "🔗 Port: ${APP_PORT} → ${CONTAINER_PORT}"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -228,7 +163,7 @@ pipeline {
             echo "  Project: ${IMAGE_NAME}"
             echo "  Branch: ${env.BRANCH_NAME}"
             echo "  Build: #${env.BUILD_NUMBER}"
-            echo "  Version: ${NEW_VERSION}"
+            echo "  Image: ${IMAGE_FULL}:${IMAGE_TAG}"
         }
     }
 }

@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: ganipedia-web
     ports:
-      - "3300:80"
+      - "3300:3300"
     restart: unless-stopped
     environment:
       - NODE_ENV=production
