@@ -45,10 +45,10 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Smaller image: no extra packages. Use built-in wget for healthcheck.
-EXPOSE 3001
+EXPOSE 3300
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD wget -qO- http://127.0.0.1:3001/health >/dev/null 2>&1 || exit 1
+    CMD wget -qO- http://127.0.0.1:3300/health >/dev/null 2>&1 || exit 1
 
 STOPSIGNAL SIGQUIT
 

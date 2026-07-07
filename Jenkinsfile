@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     environment {
-        REGISTRY = "registry.ganipedia.xyz"
+        REGISTRY = "registry.ganipedia.com"
         REGISTRY_CREDENTIALS_ID = "ganipedia-registry"
         
         // Application Configuration 
         IMAGE_NAME = "ganipedia-app"
         CONTAINER_NAME = "ganipedia-app"
-        APP_PORT = "3001"
-        CONTAINER_PORT = "3001"
+        APP_PORT = "3300"
+        CONTAINER_PORT = "3300"
         
         // Computed values
         IMAGE_FULL = "${REGISTRY}/${IMAGE_NAME}"

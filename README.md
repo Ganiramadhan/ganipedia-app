@@ -99,13 +99,13 @@ pnpm install
 pnpm dev
 ```
 
-Server will run at `http://localhost:3001`
+Server will run at `http://localhost:3300`
 
 ## 📦 Available Scripts
 
 | Script | Description |
 |--------|-------------|
-| `pnpm dev` | Start development server (port 3001) |
+| `pnpm dev` | Start development server (port 3300) |
 | `pnpm build` | Build for production (validates images first) |
 | `pnpm preview` | Preview production build |
 | `pnpm lint` | Run ESLint |
@@ -131,9 +131,9 @@ Build output will be available in the `dist/` folder
 docker build -t ganipedia:latest .
 ```
 
-**Run Container (maps internal port 80 to external 3001):**
+**Run Container (maps internal port 80 to external 3300):**
 ```bash
-docker run -d -p 3001:80 --name ganipedia ganipedia:latest
+docker run -d -p 3300:80 --name ganipedia ganipedia:latest
 ```
 
 **Using Docker Compose:**
@@ -141,7 +141,7 @@ docker run -d -p 3001:80 --name ganipedia ganipedia:latest
 docker-compose up -d
 ```
 
-Website will be available at `http://localhost:3001`
+Website will be available at `http://localhost:3300`
 
 **Stop Container:**
 ```bash
@@ -154,7 +154,7 @@ docker-compose down
 
 **Nginx Configuration:**
 - Internal Port: 80 (nginx default)
-- External Port: 3001 (mapped via docker)
+- External Port: 3300 (mapped via docker)
 - Gzip compression enabled
 - Static assets caching (1 year)
 - SPA routing support
