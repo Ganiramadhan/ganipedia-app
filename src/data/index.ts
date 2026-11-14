@@ -53,6 +53,19 @@ export const carouselSlides: CarouselSlide[] = [
 // Portfolio Data (ordered: most recent first)
 export const portfolios: Portfolio[] = [
   {
+    id: 'portfolio-saku-hrmis-mobile',
+    title: 'SAKU – Employee Administration System',
+    category: 'Mobile App',
+    image: '/projects/saku-hrmis-1.webp',
+    images: [
+      '/projects/saku-hrmis-1.webp',
+    ],
+    description:
+      'Platform administrasi kepegawaian untuk satpam dan karyawan BPD Abujapi Jabar: absensi, patroli, jadwal shift, pengajuan izin, slip gaji, dan pengajuan kredit dalam satu aplikasi mobile, didukung portal web dan backend yang scalable.',
+    technologies: ['Golang', 'Next.js', 'Flutter', 'TypeScript', 'PostgreSQL', 'Kubernetes', 'RabbitMQ', 'Redis'],
+    link: 'https://saku.bpdabujapijabar.or.id/',
+  },
+  {
     id: 'portfolio-saku-finance',
     title: 'SAKU Finance',
     category: 'Finance SaaS',
